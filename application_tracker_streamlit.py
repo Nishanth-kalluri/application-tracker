@@ -4,7 +4,6 @@ import hashlib
 import pandas as pd
 from datetime import datetime, timedelta
 import os
-import psutil
 
 # ============================================================================
 # CONFIGURATION AND SETUP
@@ -18,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for beautiful minimal design
+# Custom CSS for beautiful minimal design - Theme Compatible
 st.markdown("""
 <style>
     /* Import Google Font */
@@ -32,7 +31,6 @@ st.markdown("""
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     
     /* Main container styling */
     .main {
@@ -44,118 +42,46 @@ st.markdown("""
     /* Custom button styling */
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        color: white !important;
         border: none;
         padding: 0.5rem 1.5rem;
         border-radius: 12px;
         font-weight: 500;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.2);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.4);
-    }
-    
-    /* Primary button styling */
-    .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        font-weight: 600;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
     }
     
     /* Delete button styling */
     div[data-testid="column"]:last-child .stButton > button {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: #ff6b6b;
         padding: 0.4rem 1rem;
         font-size: 0.875rem;
     }
     
-    /* Input field styling */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea,
-    .stDateInput > div > div > input {
-        background-color: #f8f9fa;
-        border: 2px solid transparent;
-        border-radius: 10px;
-        padding: 0.75rem;
-        transition: all 0.3s ease;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus,
-    .stDateInput > div > div > input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        background-color: white;
+    div[data-testid="column"]:last-child .stButton > button:hover {
+        background: #ff5252;
     }
     
     /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 2rem;
-        background-color: transparent;
-        border-bottom: 2px solid #e9ecef;
     }
     
     .stTabs [data-baseweb="tab"] {
         height: 50px;
         padding: 0 1rem;
-        background-color: transparent;
-        border: none;
-        color: #6c757d;
         font-weight: 500;
         transition: all 0.3s ease;
     }
     
-    .stTabs [data-baseweb="tab"]:hover {
-        color: #667eea;
-    }
-    
     .stTabs [aria-selected="true"] {
-        background-color: transparent;
-        color: #667eea;
         border-bottom: 3px solid #667eea;
         font-weight: 600;
-    }
-    
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 12px;
-        border: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .streamlit-expanderHeader:hover {
-        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-    }
-    
-    /* Container styling */
-    div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="column"]) {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="column"]):hover {
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
-    }
-    
-    /* Success/Error/Info messages */
-    .stAlert {
-        border-radius: 12px;
-        border: none;
-        padding: 1rem 1.5rem;
     }
     
     /* Headers styling */
@@ -163,50 +89,15 @@ st.markdown("""
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        background-clip: text;
         font-weight: 700;
         font-size: 2.5rem;
         margin-bottom: 2rem;
     }
     
-    h2 {
-        color: #2d3436;
-        font-weight: 600;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-    }
-    
-    h3 {
-        color: #2d3436;
-        font-weight: 600;
-    }
-    
-    /* Custom divider */
-    hr {
-        margin: 1.5rem 0;
-        border: none;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #dee2e6, transparent);
-    }
-    
-    /* Login page centering */
-    div[data-testid="stForm"] {
-        background: white;
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Metric styling for sidebar */
-    [data-testid="metric-container"] {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1rem;
-        border-radius: 12px;
-        margin-bottom: 0.5rem;
-    }
-    
     /* Animation for smooth transitions */
-    * {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .stButton > button, .stTabs [data-baseweb="tab"] {
+        transition: all 0.2s ease;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -343,13 +234,10 @@ def login_page():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     
     with col2:
-        st.markdown("""
-            <div style='text-align: center; margin-bottom: 2rem;'>
-                <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>✨</h1>
-                <h2 style='color: #2d3436; font-weight: 300; letter-spacing: -0.5px;'>Welcome Back</h2>
-                <p style='color: #636e72; margin-top: 0.5rem;'>Track your journey to success</p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("# ✨")
+        st.markdown("## Welcome Back")
+        st.markdown("Track your journey to success")
+        st.markdown("---")
         
         with st.form("login_form", clear_on_submit=False):
             email = st.text_input("✉️ Email", placeholder="your@email.com")
@@ -530,12 +418,6 @@ def delete_note(note_id, user_email):
 # UTILITY FUNCTIONS
 # ============================================================================
 
-def get_memory_usage():
-    """Get current memory usage."""
-    process = psutil.Process(os.getpid())
-    memory_info = process.memory_info()
-    return memory_info.rss / 1024 / 1024  # MB
-
 def format_date(date_str):
     """Format date string for better display."""
     try:
@@ -618,19 +500,8 @@ def applications_tab():
                 col1, col2 = st.columns([5, 1])
                 
                 with col1:
-                    st.markdown(f"""
-                        <div style='margin-bottom: 0.5rem;'>
-                            <span style='font-size: 1.2rem; font-weight: 600; color: #2d3436;'>{row['Company']}</span>
-                            <span style='color: #667eea; margin-left: 0.5rem;'>•</span>
-                            <span style='color: #636e72; margin-left: 0.5rem;'>{row['Role']}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown(f"""
-                        <div style='color: #95a5a6; font-size: 0.9rem; margin-bottom: 0.5rem;'>
-                            📅 Applied: {format_date(row['Date Applied'])}
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"**{row['Company']}** • {row['Role']}")
+                    st.caption(f"📅 Applied: {format_date(row['Date Applied'])}")
                     
                     if row['URL']:
                         st.markdown(f"🔗 [View Job Posting]({row['URL']})")
@@ -643,13 +514,10 @@ def applications_tab():
                     if st.button("Delete", key=f"del_app_{row['ID']}", help="Remove this application"):
                         delete_application(row['ID'], st.session_state.user_email)
                         st.rerun()
+                        
+            st.divider()
     else:
-        st.markdown("""
-            <div style='text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 16px;'>
-                <h3 style='color: #95a5a6;'>No applications yet</h3>
-                <p style='color: #b2bec3;'>Start tracking your job applications by adding your first one above!</p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.info("No applications yet. Start tracking your job applications by adding your first one above!")
 
 def networking_tab():
     """Networking attempts management tab."""
@@ -719,17 +587,8 @@ def networking_tab():
                 col1, col2 = st.columns([5, 1])
                 
                 with col1:
-                    st.markdown(f"""
-                        <div style='margin-bottom: 0.5rem;'>
-                            <span style='font-size: 1.2rem; font-weight: 600; color: #2d3436;'>{row['Company']}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown(f"""
-                        <div style='color: #95a5a6; font-size: 0.9rem; margin-bottom: 0.5rem;'>
-                            📅 Reached out: {format_date(row['Date Sent'])}
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"**{row['Company']}**")
+                    st.caption(f"📅 Reached out: {format_date(row['Date Sent'])}")
                     
                     if row['LinkedIn URL']:
                         st.markdown(f"💼 [View LinkedIn Profile]({row['LinkedIn URL']})")
@@ -742,13 +601,10 @@ def networking_tab():
                     if st.button("Delete", key=f"del_net_{row['ID']}", help="Remove this connection"):
                         delete_networking(row['ID'], st.session_state.user_email)
                         st.rerun()
+                        
+            st.divider()
     else:
-        st.markdown("""
-            <div style='text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 16px;'>
-                <h3 style='color: #95a5a6;'>No connections yet</h3>
-                <p style='color: #b2bec3;'>Start building your network by adding your first connection above!</p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.info("No connections yet. Start building your network by adding your first connection above!")
 
 def notes_tab():
     """General notes management tab."""
@@ -804,37 +660,22 @@ def notes_tab():
                 col1, col2 = st.columns([5, 1])
                 
                 with col1:
-                    st.markdown(f"""
-                        <div style='margin-bottom: 0.5rem;'>
-                            <span style='font-size: 1.2rem; font-weight: 600; color: #2d3436;'>{row['Title']}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown(f"""
-                        <div style='color: #95a5a6; font-size: 0.9rem; margin-bottom: 0.5rem;'>
-                            📅 Created: {format_date(str(row['Created']).split()[0])}
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"**{row['Title']}**")
+                    st.caption(f"📅 Created: {format_date(str(row['Created']).split()[0])}")
                     
                     if row['Body']:
-                        st.markdown(f"""
-                            <div style='background: #f8f9fa; padding: 1rem; border-radius: 8px; color: #636e72;'>
-                                {row['Body']}
-                            </div>
-                        """, unsafe_allow_html=True)
+                        with st.expander("View Note", expanded=False):
+                            st.write(row['Body'])
                 
                 with col2:
                     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
                     if st.button("Delete", key=f"del_note_{row['ID']}", help="Remove this note"):
                         delete_note(row['ID'], st.session_state.user_email)
                         st.rerun()
+                        
+            st.divider()
     else:
-        st.markdown("""
-            <div style='text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 16px;'>
-                <h3 style='color: #95a5a6;'>No notes yet</h3>
-                <p style='color: #b2bec3;'>Start documenting your journey by adding your first note above!</p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.info("No notes yet. Start documenting your journey by adding your first note above!")
 
 # ============================================================================
 # MAIN APPLICATION
@@ -854,31 +695,19 @@ def main():
         return
     
     # Main application UI
-    st.markdown("""
-        <h1 style='text-align: center; margin-bottom: 0.5rem;'>✨ Application Tracker</h1>
-        <p style='text-align: center; color: #636e72; margin-bottom: 2rem;'>Your journey to success, beautifully organized</p>
-    """, unsafe_allow_html=True)
+    st.title("✨ Application Tracker")
+    st.caption("Your journey to success, beautifully organized")
     
     # Sidebar with user info and logout
     with st.sidebar:
-        st.markdown("""
-            <div style='text-align: center; padding: 2rem 0;'>
-                <div style='font-size: 3rem; margin-bottom: 1rem;'>👤</div>
-                <h3 style='margin: 0; color: #2d3436;'>Welcome!</h3>
-                <p style='color: #636e72; margin: 0.5rem 0;'>{}</p>
-            </div>
-        """.format(st.session_state.user_email), unsafe_allow_html=True)
+        st.markdown("### 👤 User Profile")
+        st.write(f"**Email:** {st.session_state.user_email}")
         
         hours_remaining = 24 - int((datetime.now() - st.session_state.login_time).total_seconds() / 3600)
-        memory_usage = get_memory_usage()
         
         st.markdown("---")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("⏱️ Session", f"{hours_remaining}h left")
-        with col2:
-            st.metric("💾 Memory", f"{memory_usage:.1f} MB")
+        st.metric("⏱️ Session Time", f"{hours_remaining} hours remaining")
         
         st.markdown("---")
         
@@ -886,12 +715,6 @@ def main():
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
-        
-        st.markdown("""
-            <div style='position: fixed; bottom: 1rem; left: 1rem; right: 1rem; text-align: center;'>
-                <p style='color: #95a5a6; font-size: 0.75rem;'>Made with ❤️ using Streamlit</p>
-            </div>
-        """, unsafe_allow_html=True)
     
     # Main content tabs
     tab1, tab2, tab3 = st.tabs(["📋 Applications", "🤝 Networking", "📝 Notes"])
